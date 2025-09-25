@@ -30,6 +30,31 @@ const geminiResponseSchema = {
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse | { status: 'error'; message: string }>> {
   try {
+    // Check environment variables first
+    if (!process.env.GEMINI_API_KEY) {
+      console.error('Missing GEMINI_API_KEY environment variable');
+      return NextResponse.json(
+        { status: 'error', message: 'Server configuration error: Missing API key.' },
+        { status: 500 }
+      );
+    }
+    
+    if (!process.env.SHORTCUT_API_KEY) {
+      console.error('Missing SHORTCUT_API_KEY environment variable');
+      return NextResponse.json(
+        { status: 'error', message: 'Server configuration error: Missing API key.' },
+        { status: 500 }
+      );
+    }
+    
+    if (!process.env.DATABASE_URL) {
+      console.error('Missing DATABASE_URL environment variable');
+      return NextResponse.json(
+        { status: 'error', message: 'Server configuration error: Missing database URL.' },
+        { status: 500 }
+      );
+    }
+
     // 1. Request Handling and Validation
     const body: ApiRequestBody = await request.json();
     const { prompt, userId } = body;
@@ -119,9 +144,22 @@ ${geminiOutput.testingRequirements}
 
   } catch (error) {
     console.error('API Ticket creation failed:', error);
-    // Return a generic error message to the client for security.
+    
+    // Provide more specific error messages for debugging
+    let errorMessage = 'An internal server error occurred.';
+    
+    if (error instanceof Error) {
+      if (error.message.includes('API key')) {
+        errorMessage = 'API configuration error.';
+      } else if (error.message.includes('database') || error.message.includes('connection')) {
+        errorMessage = 'Database connection error.';
+      } else if (error.message.includes('fetch')) {
+        errorMessage = 'External API error.';
+      }
+    }
+    
     return NextResponse.json(
-      { status: 'error', message: 'An internal server error occurred.' },
+      { status: 'error', message: errorMessage },
       { status: 500 }
     );
   }
