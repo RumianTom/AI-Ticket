@@ -122,14 +122,17 @@ ${geminiOutput.technicalRequirements}
 **Testing Requirements:**
 ${geminiOutput.testingRequirements}
       `.trim(),
-      // Assuming a default project and workflow for a new story
-      // project_id: YOUR_PROJECT_ID,
-      // workflow_state_id: YOUR_BACKLOG_STATE_ID,
-      // team: YOUR_TEAM_ID,
+      // Required fields for Shortcut API - using environment variables or defaults
+      project_id: parseInt(process.env.SHORTCUT_PROJECT_ID || '1'),
+      workflow_state_id: parseInt(process.env.SHORTCUT_WORKFLOW_STATE_ID || '1'),
     };
 
+    console.log('Shortcut payload:', shortcutPayload);
+
     // Make the request to create the story in Shortcut.
+    console.log('Creating story in Shortcut...');
     const shortcutStory = await shortcutClient.createStory(shortcutPayload);
+    console.log('Shortcut story created:', shortcutStory.data.id);
 
     // 4. Database Persistence
     // Log the transaction in the Neon database.
