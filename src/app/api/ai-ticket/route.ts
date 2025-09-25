@@ -145,14 +145,8 @@ ${geminiOutput.testingRequirements}
       `.trim(),
     };
 
-    // Use workflow ID instead of project ID since no projects exist
-    const workflowId = parseInt(process.env.SHORTCUT_WORKFLOW_ID || '500000005');
-    if (!isNaN(workflowId)) {
-      shortcutPayload.workflow_id = workflowId;
-      console.log('Using workflow_id:', workflowId);
-    } else {
-      console.log('Invalid workflow_id, skipping');
-    }
+    // Skip workflow_id as it's not a valid parameter for story creation
+    console.log('Skipping workflow_id - not a valid parameter for story creation');
     
     console.log('After project_id validation, payload keys:', Object.keys(shortcutPayload));
 
@@ -171,7 +165,6 @@ ${geminiOutput.testingRequirements}
 
     console.log('Shortcut payload:', shortcutPayload);
     console.log('Environment variables:', {
-      SHORTCUT_WORKFLOW_ID: process.env.SHORTCUT_WORKFLOW_ID,
       SHORTCUT_WORKFLOW_STATE_ID: process.env.SHORTCUT_WORKFLOW_STATE_ID
     });
     
