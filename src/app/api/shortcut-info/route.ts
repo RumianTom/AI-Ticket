@@ -18,16 +18,12 @@ export async function GET() {
     // Get all workflows
     const workflows = await shortcutClient.listWorkflows();
     
-    // Get workflow states for the first workflow
+    // Get workflow states - they're included in the workflow object
     let workflowStates: any[] = [];
     if (workflows.data.length > 0) {
       const firstWorkflow = workflows.data[0];
-      try {
-        const states = await shortcutClient.listWorkflowStates();
-        workflowStates = states.data;
-      } catch (error) {
-        console.log('Could not fetch workflow states:', error);
-      }
+      // Workflow states are included in the workflow object
+      workflowStates = firstWorkflow.states || [];
     }
 
     return NextResponse.json({
