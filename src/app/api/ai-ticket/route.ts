@@ -145,22 +145,15 @@ ${geminiOutput.testingRequirements}
       `.trim(),
     };
 
-    // Skip workflow_id as it's not a valid parameter for story creation
-    console.log('Skipping workflow_id - not a valid parameter for story creation');
-    
-    console.log('After project_id validation, payload keys:', Object.keys(shortcutPayload));
-
-    // Only add workflow_state_id if it's provided and valid
-    if (process.env.SHORTCUT_WORKFLOW_STATE_ID && process.env.SHORTCUT_WORKFLOW_STATE_ID !== '1') {
-      const workflowStateId = parseInt(process.env.SHORTCUT_WORKFLOW_STATE_ID);
-      if (!isNaN(workflowStateId)) {
-        shortcutPayload.workflow_state_id = workflowStateId;
-        console.log('Using workflow_state_id:', workflowStateId);
-      } else {
-        console.log('Invalid workflow_state_id (not a number), skipping:', process.env.SHORTCUT_WORKFLOW_STATE_ID);
-      }
+    // Add workflow_state_id - this is required for story creation
+    // We'll use the default state from the Standard workflow (500000005)
+    // The default state is typically the first state in the workflow
+    const defaultWorkflowStateId = parseInt(process.env.SHORTCUT_WORKFLOW_STATE_ID || '500000006'); // Default state ID
+    if (!isNaN(defaultWorkflowStateId)) {
+      shortcutPayload.workflow_state_id = defaultWorkflowStateId;
+      console.log('Using workflow_state_id:', defaultWorkflowStateId);
     } else {
-      console.log('Skipping workflow_state_id - using default');
+      console.log('Invalid workflow_state_id, skipping');
     }
 
     console.log('Shortcut payload:', shortcutPayload);

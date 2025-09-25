@@ -17,6 +17,18 @@ export async function GET() {
     
     // Get all workflows
     const workflows = await shortcutClient.listWorkflows();
+    
+    // Get workflow states for the first workflow
+    let workflowStates: any[] = [];
+    if (workflows.data.length > 0) {
+      const firstWorkflow = workflows.data[0];
+      try {
+        const states = await shortcutClient.listWorkflowStates();
+        workflowStates = states.data;
+      } catch (error) {
+        console.log('Could not fetch workflow states:', error);
+      }
+    }
 
     return NextResponse.json({
       status: 'success',
@@ -29,6 +41,12 @@ export async function GET() {
         id: workflow.id,
         name: workflow.name,
         description: workflow.description
+      })),
+      workflowStates: workflowStates.map(state => ({
+        id: state.id,
+        name: state.name,
+        description: state.description,
+        type: state.type
       }))
     });
 
