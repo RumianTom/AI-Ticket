@@ -1,3 +1,4 @@
+import React from 'react';
 import { GeminiOutputSchema } from "@/app/api/ai-ticket/types";
 
 interface TicketPreviewProps {
