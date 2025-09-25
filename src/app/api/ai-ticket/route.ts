@@ -1,0 +1,128 @@
+
+import { db } from '@/db';
+import { aiTickets } from '@/db/schema';
+import { GoogleGenerativeAI, SchemaType } from '@google/generative-ai';
+import { ShortcutClient } from '@shortcut/client';
+import { NextRequest, NextResponse } from 'next/server';
+import { ApiRequestBody, ApiResponse, GeminiOutputSchema } from './types';
+
+/**
+ * Defines the structure of the Gemini API's response schema. This is a critical
+ * step in ensuring the AI returns a predictable and parsable JSON object.
+ * This schema is defined as a constant to be reusable and easy to manage.
+ */
+const geminiResponseSchema = {
+  type: SchemaType.OBJECT as const,
+  properties: {
+    objective: { type: SchemaType.STRING as const },
+    background: { type: SchemaType.STRING as const },
+    scopeOfWork: { type: SchemaType.STRING as const },
+    technicalRequirements: { type: SchemaType.STRING as const },
+    testingRequirements: { type: SchemaType.STRING as const },
+  },
+  required: ['objective', 'background', 'scopeOfWork', 'technicalRequirements', 'testingRequirements'],
+};
+
+/**
+ * Handles the POST request to create an AI-generated ticket.
+ * @param request The incoming Next.js request.
+ * @returns {Promise<NextResponse>} A JSON response indicating success or failure.
+ */
+export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse | { status: 'error'; message: string }>> {
+  try {
+    // 1. Request Handling and Validation
+    const body: ApiRequestBody = await request.json();
+    const { prompt, userId } = body;
+
+    if (!prompt || typeof prompt!== 'string' || !userId ||typeof userId!== 'number') {
+      return NextResponse.json(
+        { status: 'error', message: 'Invalid or missing prompt or userId.' },
+        { status: 400 }
+      );
+    }
+
+    // 2. Gemini API Interaction
+    // Initialize the Gemini client using the API key from environment variables.
+    const geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
+    // Construct a highly-specific prompt using the PTCF framework.
+    const geminiPrompt = `
+      You are a senior product manager and an expert technical writer.
+      Your task is to convert a raw, unstructured user prompt into a formal, structured JSON payload for a software development ticket.
+      The context is a user story or a request from a product manager.
+      Your output must be a single JSON object that strictly adheres to the provided schema.
+
+      User Prompt:
+      "${prompt}"
+    `;
+
+    // Make the API call with the structured schema.
+    const geminiResult = await geminiClient
+     .getGenerativeModel({ model: 'gemini-1.5-flash' })
+     .generateContent({
+        contents: [{ role: 'user', parts: [{ text: geminiPrompt }] }],
+        generationConfig: {
+          responseMimeType: 'application/json',
+          responseSchema: geminiResponseSchema,
+        },
+      });
+
+    // Parse the AI's response text into a JSON object.
+    const geminiOutput: GeminiOutputSchema = JSON.parse(geminiResult.response.text());
+
+    // 3. Shortcut API Integration
+    // Initialize the Shortcut client with the API key.
+    const shortcutClient = new ShortcutClient(process.env.SHORTCUT_API_KEY!);
+
+    // Map the AI-generated data to the Shortcut API payload.
+    // The objective becomes the story's name, and all other fields are combined into the description.
+    const shortcutPayload = {
+      name: geminiOutput.objective,
+      description: `
+**Background:**
+${geminiOutput.background}
+
+**Scope of Work:**
+${geminiOutput.scopeOfWork}
+
+**Technical Requirements:**
+${geminiOutput.technicalRequirements}
+
+**Testing Requirements:**
+${geminiOutput.testingRequirements}
+      `.trim(),
+      // Assuming a default project and workflow for a new story
+      // project_id: YOUR_PROJECT_ID,
+      // workflow_state_id: YOUR_BACKLOG_STATE_ID,
+      // team: YOUR_TEAM_ID,
+    };
+
+    // Make the request to create the story in Shortcut.
+    const shortcutStory = await shortcutClient.createStory(shortcutPayload);
+
+    // 4. Database Persistence
+    // Log the transaction in the Neon database.
+    await db.insert(aiTickets).values({
+      userId,
+      rawPrompt: prompt,
+      geminiOutput: geminiOutput as any, // Drizzle's jsonb type requires a type assertion
+      shortcutStoryId: shortcutStory.data.id,
+      updatedAt: new Date(),
+    });
+
+    // 5. Final Response
+    return NextResponse.json({
+      status: 'success',
+      shortcutStoryId: shortcutStory.data.id,
+      message: 'AI ticket created successfully.',
+    }, { status: 201 });
+
+  } catch (error) {
+    console.error('API Ticket creation failed:', error);
+    // Return a generic error message to the client for security.
+    return NextResponse.json(
+      { status: 'error', message: 'An internal server error occurred.' },
+      { status: 500 }
+    );
+  }
+}
