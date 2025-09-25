@@ -157,6 +157,8 @@ ${geminiOutput.testingRequirements}
     } else {
       console.log('No project_id provided, using default');
     }
+    
+    console.log('After project_id validation, payload keys:', Object.keys(shortcutPayload));
 
     // Only add workflow_state_id if it's provided and valid
     if (process.env.SHORTCUT_WORKFLOW_STATE_ID && process.env.SHORTCUT_WORKFLOW_STATE_ID !== '1') {
@@ -176,6 +178,9 @@ ${geminiOutput.testingRequirements}
       SHORTCUT_PROJECT_ID: process.env.SHORTCUT_PROJECT_ID,
       SHORTCUT_WORKFLOW_STATE_ID: process.env.SHORTCUT_WORKFLOW_STATE_ID
     });
+    
+    // Debug: Check if project_id is being added
+    console.log('Before project_id validation, payload keys:', Object.keys(shortcutPayload));
 
     // Make the request to create the story in Shortcut.
     console.log('Creating story in Shortcut...');
