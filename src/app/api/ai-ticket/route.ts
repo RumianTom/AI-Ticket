@@ -127,11 +127,18 @@ ${geminiOutput.testingRequirements}
     };
 
     // Only add workflow_state_id if it's provided and valid
-    if (process.env.SHORTCUT_WORKFLOW_STATE_ID) {
+    if (process.env.SHORTCUT_WORKFLOW_STATE_ID && process.env.SHORTCUT_WORKFLOW_STATE_ID !== '1') {
       shortcutPayload.workflow_state_id = parseInt(process.env.SHORTCUT_WORKFLOW_STATE_ID);
+      console.log('Using workflow_state_id:', shortcutPayload.workflow_state_id);
+    } else {
+      console.log('Skipping workflow_state_id - using default');
     }
 
     console.log('Shortcut payload:', shortcutPayload);
+    console.log('Environment variables:', {
+      SHORTCUT_PROJECT_ID: process.env.SHORTCUT_PROJECT_ID,
+      SHORTCUT_WORKFLOW_STATE_ID: process.env.SHORTCUT_WORKFLOW_STATE_ID
+    });
 
     // Make the request to create the story in Shortcut.
     console.log('Creating story in Shortcut...');
