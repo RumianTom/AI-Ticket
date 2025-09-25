@@ -143,9 +143,20 @@ ${geminiOutput.technicalRequirements}
 **Testing Requirements:**
 ${geminiOutput.testingRequirements}
       `.trim(),
-      // Required fields for Shortcut API - using environment variables or defaults
-      project_id: parseInt(process.env.SHORTCUT_PROJECT_ID || '1'),
     };
+
+    // Only add project_id if it's provided and valid
+    if (process.env.SHORTCUT_PROJECT_ID) {
+      const projectId = parseInt(process.env.SHORTCUT_PROJECT_ID);
+      if (!isNaN(projectId)) {
+        shortcutPayload.project_id = projectId;
+        console.log('Using project_id:', projectId);
+      } else {
+        console.log('Invalid project_id (not a number), skipping:', process.env.SHORTCUT_PROJECT_ID);
+      }
+    } else {
+      console.log('No project_id provided, using default');
+    }
 
     // Only add workflow_state_id if it's provided and valid
     if (process.env.SHORTCUT_WORKFLOW_STATE_ID && process.env.SHORTCUT_WORKFLOW_STATE_ID !== '1') {
