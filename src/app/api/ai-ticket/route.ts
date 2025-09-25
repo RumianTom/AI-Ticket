@@ -149,8 +149,13 @@ ${geminiOutput.testingRequirements}
 
     // Only add workflow_state_id if it's provided and valid
     if (process.env.SHORTCUT_WORKFLOW_STATE_ID && process.env.SHORTCUT_WORKFLOW_STATE_ID !== '1') {
-      shortcutPayload.workflow_state_id = parseInt(process.env.SHORTCUT_WORKFLOW_STATE_ID);
-      console.log('Using workflow_state_id:', shortcutPayload.workflow_state_id);
+      const workflowStateId = parseInt(process.env.SHORTCUT_WORKFLOW_STATE_ID);
+      if (!isNaN(workflowStateId)) {
+        shortcutPayload.workflow_state_id = workflowStateId;
+        console.log('Using workflow_state_id:', workflowStateId);
+      } else {
+        console.log('Invalid workflow_state_id (not a number), skipping:', process.env.SHORTCUT_WORKFLOW_STATE_ID);
+      }
     } else {
       console.log('Skipping workflow_state_id - using default');
     }
