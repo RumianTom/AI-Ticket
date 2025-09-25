@@ -87,16 +87,34 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
       "${prompt}"
     `;
 
-    // Make the API call with the structured schema.
-    const geminiResult = await geminiClient
-     .getGenerativeModel({ model: 'gemini-1.5-flash' })
-     .generateContent({
-        contents: [{ role: 'user', parts: [{ text: geminiPrompt }] }],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          responseSchema: geminiResponseSchema,
-        },
-      });
+    // Make the API call with the structured schema with retry logic.
+    let geminiResult;
+    let retryCount = 0;
+    const maxRetries = 3;
+    
+    while (retryCount < maxRetries) {
+      try {
+        console.log(`Attempting Gemini API call (attempt ${retryCount + 1}/${maxRetries})`);
+        geminiResult = await geminiClient
+         .getGenerativeModel({ model: 'gemini-1.5-flash' })
+         .generateContent({
+            contents: [{ role: 'user', parts: [{ text: geminiPrompt }] }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              responseSchema: geminiResponseSchema,
+            },
+          });
+        break; // Success, exit retry loop
+      } catch (error: any) {
+        retryCount++;
+        if (error.status === 503 && retryCount < maxRetries) {
+          console.log(`Gemini API overloaded, retrying in ${retryCount * 2} seconds...`);
+          await new Promise(resolve => setTimeout(resolve, retryCount * 2000));
+          continue;
+        }
+        throw error; // Re-throw if not a 503 error or max retries reached
+      }
+    }
 
     // Parse the AI's response text into a JSON object.
     const geminiOutput: GeminiOutputSchema = JSON.parse(geminiResult.response.text());
