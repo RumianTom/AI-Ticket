@@ -117,6 +117,9 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     }
 
     // Parse the AI's response text into a JSON object.
+    if (!geminiResult) {
+      throw new Error('Failed to get response from Gemini API after all retries');
+    }
     const geminiOutput: GeminiOutputSchema = JSON.parse(geminiResult.response.text());
 
     // 3. Shortcut API Integration
