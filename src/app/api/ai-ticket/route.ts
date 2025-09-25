@@ -76,12 +76,29 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     // Initialize the Gemini client using the API key from environment variables.
     const geminiClient = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
-    // Construct a highly-specific prompt using the PTCF framework.
+    // Construct a highly-specific prompt using the detailed template format.
     const geminiPrompt = `
       You are a senior product manager and an expert technical writer.
       Your task is to convert a raw, unstructured user prompt into a formal, structured JSON payload for a software development ticket.
       The context is a user story or a request from a product manager.
       Your output must be a single JSON object that strictly adheres to the provided schema.
+
+      IMPORTANT: Structure your response using this exact format:
+
+      # Objective
+      [Clear, concise statement of what needs to be implemented]
+
+      # Background
+      [Context explaining why this feature is needed and its business value]
+
+      # Scope of Work
+      [Bullet-pointed list of specific deliverables and features to implement]
+
+      # Technical Requirements
+      [Detailed technical specifications, including UI/UX requirements, data structures, algorithms, and implementation details]
+
+      # Testing Requirements
+      [Specific testing scenarios, edge cases, and validation criteria]
 
       User Prompt:
       "${prompt}"
