@@ -107,7 +107,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
 
     // Map the AI-generated data to the Shortcut API payload.
     // The objective becomes the story's name, and all other fields are combined into the description.
-    const shortcutPayload = {
+    const shortcutPayload: any = {
       name: geminiOutput.objective,
       description: `
 **Background:**
@@ -124,8 +124,12 @@ ${geminiOutput.testingRequirements}
       `.trim(),
       // Required fields for Shortcut API - using environment variables or defaults
       project_id: parseInt(process.env.SHORTCUT_PROJECT_ID || '1'),
-      workflow_state_id: parseInt(process.env.SHORTCUT_WORKFLOW_STATE_ID || '1'),
     };
+
+    // Only add workflow_state_id if it's provided and valid
+    if (process.env.SHORTCUT_WORKFLOW_STATE_ID) {
+      shortcutPayload.workflow_state_id = parseInt(process.env.SHORTCUT_WORKFLOW_STATE_ID);
+    }
 
     console.log('Shortcut payload:', shortcutPayload);
 
