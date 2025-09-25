@@ -15,8 +15,8 @@ export async function GET() {
     // Get all projects
     const projects = await shortcutClient.listProjects();
     
-    // Get all workflow states
-    const workflowStates = await shortcutClient.listWorkflowStates();
+    // Get all workflows
+    const workflows = await shortcutClient.listWorkflows();
 
     return NextResponse.json({
       status: 'success',
@@ -25,10 +25,10 @@ export async function GET() {
         name: project.name,
         description: project.description
       })),
-      workflowStates: workflowStates.data.map(state => ({
-        id: state.id,
-        name: state.name,
-        description: state.description
+      workflows: workflows.data.map(workflow => ({
+        id: workflow.id,
+        name: workflow.name,
+        description: workflow.description
       }))
     });
 
