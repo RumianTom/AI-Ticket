@@ -30,11 +30,13 @@ const geminiResponseSchema = {
  */
 export async function POST(request: NextRequest): Promise<NextResponse<ApiResponse | { status: 'error'; message: string }>> {
   try {
+    console.log('API route called');
+    
     // Check environment variables first
     if (!process.env.GEMINI_API_KEY) {
       console.error('Missing GEMINI_API_KEY environment variable');
       return NextResponse.json(
-        { status: 'error', message: 'Server configuration error: Missing API key.' },
+        { status: 'error', message: 'Server configuration error: Missing GEMINI_API_KEY.' },
         { status: 500 }
       );
     }
@@ -42,7 +44,7 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (!process.env.SHORTCUT_API_KEY) {
       console.error('Missing SHORTCUT_API_KEY environment variable');
       return NextResponse.json(
-        { status: 'error', message: 'Server configuration error: Missing API key.' },
+        { status: 'error', message: 'Server configuration error: Missing SHORTCUT_API_KEY.' },
         { status: 500 }
       );
     }
@@ -50,14 +52,18 @@ export async function POST(request: NextRequest): Promise<NextResponse<ApiRespon
     if (!process.env.DATABASE_URL) {
       console.error('Missing DATABASE_URL environment variable');
       return NextResponse.json(
-        { status: 'error', message: 'Server configuration error: Missing database URL.' },
+        { status: 'error', message: 'Server configuration error: Missing DATABASE_URL.' },
         { status: 500 }
       );
     }
 
+    console.log('Environment variables check passed');
+
     // 1. Request Handling and Validation
     const body: ApiRequestBody = await request.json();
     const { prompt, userId } = body;
+    
+    console.log('Request body parsed:', { prompt: prompt?.substring(0, 50), userId });
 
     if (!prompt || typeof prompt!== 'string' || !userId ||typeof userId!== 'number') {
       return NextResponse.json(
@@ -127,6 +133,7 @@ ${geminiOutput.testingRequirements}
 
     // 4. Database Persistence
     // Log the transaction in the Neon database.
+    console.log('Attempting database insert...');
     await db.insert(aiTickets).values({
       userId,
       rawPrompt: prompt,
@@ -134,6 +141,7 @@ ${geminiOutput.testingRequirements}
       shortcutStoryId: shortcutStory.data.id,
       updatedAt: new Date(),
     });
+    console.log('Database insert successful');
 
     // 5. Final Response
     return NextResponse.json({
