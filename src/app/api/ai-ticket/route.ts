@@ -131,8 +131,14 @@ ${geminiOutput.testingRequirements}
 
     // Make the request to create the story in Shortcut.
     console.log('Creating story in Shortcut...');
-    const shortcutStory = await shortcutClient.createStory(shortcutPayload);
-    console.log('Shortcut story created:', shortcutStory.data.id);
+    let shortcutStory;
+    try {
+      shortcutStory = await shortcutClient.createStory(shortcutPayload);
+      console.log('Shortcut story created:', shortcutStory.data.id);
+    } catch (shortcutError: any) {
+      console.error('Shortcut API error:', shortcutError.response?.data || shortcutError.message);
+      throw new Error(`Shortcut API error: ${shortcutError.response?.data?.message || shortcutError.message}`);
+    }
 
     // 4. Database Persistence
     // Log the transaction in the Neon database.
