@@ -145,17 +145,13 @@ ${geminiOutput.testingRequirements}
       `.trim(),
     };
 
-    // Only add project_id if it's provided and valid
-    if (process.env.SHORTCUT_PROJECT_ID) {
-      const projectId = parseInt(process.env.SHORTCUT_PROJECT_ID);
-      if (!isNaN(projectId)) {
-        shortcutPayload.project_id = projectId;
-        console.log('Using project_id:', projectId);
-      } else {
-        console.log('Invalid project_id (not a number), skipping:', process.env.SHORTCUT_PROJECT_ID);
-      }
+    // Use workflow ID instead of project ID since no projects exist
+    const workflowId = parseInt(process.env.SHORTCUT_WORKFLOW_ID || '500000005');
+    if (!isNaN(workflowId)) {
+      shortcutPayload.workflow_id = workflowId;
+      console.log('Using workflow_id:', workflowId);
     } else {
-      console.log('No project_id provided, using default');
+      console.log('Invalid workflow_id, skipping');
     }
     
     console.log('After project_id validation, payload keys:', Object.keys(shortcutPayload));
@@ -175,7 +171,7 @@ ${geminiOutput.testingRequirements}
 
     console.log('Shortcut payload:', shortcutPayload);
     console.log('Environment variables:', {
-      SHORTCUT_PROJECT_ID: process.env.SHORTCUT_PROJECT_ID,
+      SHORTCUT_WORKFLOW_ID: process.env.SHORTCUT_WORKFLOW_ID,
       SHORTCUT_WORKFLOW_STATE_ID: process.env.SHORTCUT_WORKFLOW_STATE_ID
     });
     
